@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <math.h>
+
+
+double parseExpression(char *expression);
+double parseTerm(char *expression, int *index);
+double parseFactor(char *expression, int *index);
+bool isOperator(char c);
+int precedence(char op);
+
+
+bool isOperator(char c) {
+    return (c == '+' || c == '-' || c == '*' || c == '/' || c == '^');
+}
+
+
+int precedence(char op) {
+    if (op == '^')
+        return 3;
+    else if (op == '*' || op == '/')
+        return 2;
+    else if (op == '+' || op == '-')
+        return 1;
+    else
+        return 0;
+}
+
+
+double parseFactor(char *expression, int *index) {
+    double result;
+    if (expression[*index] == '(') {
+        (*index)++; // Move past '('
+        result = parseExpression(expression);
+        (*index)++; // Move past ')'
+    } else {
+        char number[20];
+        int i = 0;
+        while (isdigit(expression[*index]) || expression[*index] == '.') {
+            number[i++] = expression[*index];
+            (*index)++;
+        }
+        number[i] = '\0';
+        result = atof(number);
+    }
+    return result;
+}
+
+
+double parseTerm(char *expression, int *index) {
+    double result = parseFactor(expression, index);
+    while (isOperator(expression[*index]) && (expression[*index] == '*' || expression[*index] == '/')) {
+        char op = expression[*index];
+        (*index)++;
+        double nextFactor = parseFactor(expression, index);
+        if (op == '*')
+            result *= nextFactor;
+        else if (op == '/')
+            result /= nextFactor;
+    }
+    return result;
+}
+
+
+double parseExpression(char *expression) {
+    int index = 0;
+    double result = parseTerm(expression, &index);
+    while (isOperator(expression[index]) && (expression[index] == '+' || expression[index] == '-')) {
+        char op = expression[index];
+        index++;
+        double nextTerm = parseTerm(expression, &index);
+        if (op == '+')
+            result += nextTerm;
+        else if (op == '-')
+            result -= nextTerm;
+    }
+    return result;
+}
+
+int main() {
+    char expression[100];
+    printf("Enter an arithmetic expression: ");
+    fgets(expression, sizeof(expression), stdin);
+    double result = parseExpression(expression);
+    printf("Result: %lf\n", result);
+    return 0;
+}
