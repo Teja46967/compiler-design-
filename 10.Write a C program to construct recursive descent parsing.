@@ -1,0 +1,109 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+
+int expr();
+int term();
+int factor();
+void error();
+
+
+char *input;
+
+
+void advance() {
+    input++;
+}
+
+
+int is_digit(char c) {
+    return (c >= '0' && c <= '9');
+}
+
+
+int parse_int() {
+    int result = 0;
+    while (is_digit(*input)) {
+        result = result * 10 + (*input - '0');
+        advance();
+    }
+    return result;
+}
+
+
+int factor() {
+    if (*input == '(') {
+        advance(); // consume '('
+        int result = expr();
+        if (*input == ')') {
+            advance(); // consume ')'
+            return result;
+        } else {
+            error();
+            return 0;
+        }
+    } else if (is_digit(*input)) {
+        return parse_int();
+    } else {
+        error();
+        return 0;
+    }
+}
+
+
+int term() {
+    int result = factor();
+    while (*input == '*' || *input == '/') {
+        char op = *input;
+        advance(); // consume the operator
+        int next_factor = factor();
+        if (op == '*') {
+            result *= next_factor;
+        } else {
+            if (next_factor != 0) {
+                result /= next_factor;
+            } else {
+                error();
+                return 0;
+            }
+        }
+    }
+    return result;
+}
+
+
+int expr() {
+    int result = term();
+    while (*input == '+' || *input == '-') {
+        char op = *input;
+        advance(); // consume the operator
+        int next_term = term();
+        if (op == '+') {
+            result += next_term;
+        } else {
+            result -= next_term;
+        }
+    }
+    return result;
+}
+
+
+void error() {
+    fprintf(stderr, "Error in parsing expression\n");
+    exit(1);
+}
+
+int main() {
+    
+    printf("Enter an arithmetic expression: ");
+    char buffer[100];
+    fgets(buffer, sizeof(buffer), stdin);
+    input = buffer;
+
+    
+    int result = expr();
+    printf("Result: %d\n", result);
+
+    return 0;
+}
